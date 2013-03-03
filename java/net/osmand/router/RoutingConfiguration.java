@@ -1,18 +1,15 @@
 package net.osmand.router;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import net.osmand.Collator;
 import net.osmand.PlatformUtil;
 import net.osmand.router.GeneralRouter.GeneralRouterProfile;
-import net.osmand.router.NewGeneralRouter.RouteAttributeContext;
-import net.osmand.router.NewGeneralRouter.RouteAttributeEvalRule;
-import net.osmand.router.NewGeneralRouter.RouteDataObjectAttribute;
+import net.osmand.router.GeneralRouter.RouteAttributeContext;
+import net.osmand.router.GeneralRouter.RouteDataObjectAttribute;
 import net.osmand.util.Algorithms;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -36,7 +33,7 @@ public class RoutingConfiguration {
 	public int planRoadDirection = 0;
 
 	// 1.3 Router specific coefficients and restrictions
-	public VehicleRouter router = new NewGeneralRouter(GeneralRouterProfile.CAR, new LinkedHashMap<String, String>());
+	public VehicleRouter router = new GeneralRouter(GeneralRouterProfile.CAR, new LinkedHashMap<String, String>());
 	public String routerName = "";
 	
 	// 1.4 Used to calculate route in movement
@@ -68,9 +65,9 @@ public class RoutingConfiguration {
 			if (routers.containsKey(router)) {
 				i.router = routers.get(router);
 				if (specialization != null) {
-					Map<String, Object> params = new LinkedHashMap<String, Object>();
+					Map<String, String> params = new LinkedHashMap<String, String>();
 					for (String s : specialization) {
-						params.put(s, Boolean.TRUE);
+						params.put(s, "true");
 					}
 					i.router = i.router.specialization(params);
 				}
@@ -143,7 +140,7 @@ public class RoutingConfiguration {
 	public static RoutingConfiguration.Builder parseFromInputStream(InputStream is) throws IOException, XmlPullParserException {
 		XmlPullParser parser = PlatformUtil.newXMLPullParser();
 		final RoutingConfiguration.Builder config = new RoutingConfiguration.Builder();
-		NewGeneralRouter currentRouter = null;
+		GeneralRouter currentRouter = null;
 		RouteDataObjectAttribute currentAttribute = null;
 		Stack<RoutingRule> rulesStck = new Stack<RoutingConfiguration.RoutingRule>();
 		parser.setInput(is, "UTF-8");
@@ -175,7 +172,7 @@ public class RoutingConfiguration {
 		return config;
 	}
 
-	private static void parseRoutingParameter(XmlPullParser parser, NewGeneralRouter currentRouter) {
+	private static void parseRoutingParameter(XmlPullParser parser, GeneralRouter currentRouter) {
 		String description = parser.getAttributeValue("", "description");
 		String name = parser.getAttributeValue("", "name");
 		String id = parser.getAttributeValue("", "id");
@@ -204,7 +201,7 @@ public class RoutingConfiguration {
 		String param;
 	}
 
-	private static void parseRoutingRule(XmlPullParser parser, NewGeneralRouter currentRouter, RouteDataObjectAttribute attr,
+	private static void parseRoutingRule(XmlPullParser parser, GeneralRouter currentRouter, RouteDataObjectAttribute attr,
 			Stack<RoutingRule> stack) {
 		String pname = parser.getName();
 		if ("select".equals(pname) || "if".equals(pname) || "ifnot".equals(pname)) {
@@ -220,7 +217,8 @@ public class RoutingConfiguration {
 			RouteAttributeContext ctx = currentRouter.getObjContext(attr);
 			if("select".equals(rr.tagName)) {
 				String val = parser.getAttributeValue("", "value");
-				ctx.registerNewRule(val);
+				String type = parser.getAttributeValue("", "type");
+				ctx.registerNewRule(val, type);
 				addSubclause(rr, ctx);
 				for (int i = 0; i < stack.size(); i++) {
 					addSubclause(stack.get(i), ctx);
@@ -244,7 +242,7 @@ public class RoutingConfiguration {
 
 	
 
-	private static NewGeneralRouter parseRoutingProfile(XmlPullParser parser, final RoutingConfiguration.Builder config) {
+	private static GeneralRouter parseRoutingProfile(XmlPullParser parser, final RoutingConfiguration.Builder config) {
 		String currentSelectedRouter = parser.getAttributeValue("", "name");
 		Map<String, String> attrs = new LinkedHashMap<String, String>();
 		for(int i=0; i< parser.getAttributeCount(); i++) {
@@ -252,7 +250,7 @@ public class RoutingConfiguration {
 		}
 		GeneralRouterProfile c = Algorithms.parseEnumValue(GeneralRouterProfile.values(), 
 				parser.getAttributeValue("", "baseProfile"), GeneralRouterProfile.CAR);
-		NewGeneralRouter currentRouter = new NewGeneralRouter(c, attrs);
+		GeneralRouter currentRouter = new GeneralRouter(c, attrs);
 		config.routers.put(currentSelectedRouter, currentRouter);
 		return currentRouter;
 	}

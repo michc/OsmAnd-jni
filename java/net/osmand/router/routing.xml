@@ -47,7 +47,8 @@
 		<parameter id="avoid_unpaved" name="Avoid unpaved roads" description="Avoid unpaved roads" type="boolean"/>
 		<parameter id="avoid_ferries" name="Avoid ferries" description="Avoid ferries" type="boolean"/>
 		<parameter id="avoid_motorway" name="Avoid motorways" description="Avoid motorways" type="boolean"/>		
-		<parameter id="weight" name="Weight" description="Weight" type="numeric" values="0,1500,3000" valueDescriptions="-,1.5t,3t"/>
+		<parameter id="weight" name="Weight" description="Vehicle weight" type="numeric" values="0,5,7.5,10,15,20,25,30,40" valueDescriptions="-,5t,7.5t,10t,15t,20t,25t,30t,40t"/>
+		<parameter id="height" name="Height" description="Vehicle height" type="numeric" values="0,2.5,3,3.5,4,4.5,5" valueDescriptions="-,2.5m,3m,3.5m,4m,4.5m,4.5m,5m"/>
 		
 		<way attribute="access">
 			<select value="-1" t="highway" v="motorway">
@@ -72,10 +73,13 @@
 			<select value="-1" t="vehicle" v="no"/>
 			<select value="-1" t="barrier" v="debris"/>
 			<select value="-1" t="barrier" v="block"/>
-			
 			<select value="-1" t="maxweight">
-				<!--TODO <gt value1=":weight" value2="$maxweight"/> -->
+				<gt value1=":weight" value2="$maxweight" type="weight"/>
 			</select>
+			
+			<select value="-1" t="maxheight">
+				<gt value1=":height" value2="$maxheight" type="length"/>
+			</select> 
 			
 			<select value="1" t="highway" v="motorway"/> 
 			<select value="1" t="highway" v="motorway_link"/>
@@ -110,7 +114,7 @@
 		
 		<way attribute="speed">
 			<ifnot param="short_way">
-				<!--TODO  <select value="$maxspeed" t="maxspeed"/>  -->
+				<select value="$maxspeed" t="maxspeed" type="speed"/> 
 				<select value="110" t="highway" v="motorway"/>
 				<select value="110" t="highway" v="motorway_link"/>
 				<select value="100" t="highway" v="trunk"/>

@@ -68,6 +68,6 @@ public abstract class VehicleRouter {
 
 	public abstract void addAttribute(String k, String v);
 
-	public abstract VehicleRouter specialization(Map<String, Object> params);
+	public abstract VehicleRouter specialization(Map<String, String> params);
 	
 }

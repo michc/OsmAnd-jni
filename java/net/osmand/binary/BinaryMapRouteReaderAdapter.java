@@ -133,22 +133,7 @@ public class BinaryMapRouteReaderAdapter {
 				type = ACCESS;
 			} else if(t.equalsIgnoreCase("maxspeed") && v != null){
 				type = MAXSPEED;
-				floatValue = -1;
-				if(v.equals("none")) {
-					floatValue = RouteDataObject.NONE_MAX_SPEED;
-				} else {
-					int i = 0;
-					while (i < v.length() && Character.isDigit(v.charAt(i))) {
-						i++;
-					}
-					if (i > 0) {
-						floatValue = Integer.parseInt(v.substring(0, i));
-						floatValue /= 3.6; // km/h -> m/s
-						if (v.contains("mph")) {
-							floatValue *= 1.6;
-						}
-					}
-				}
+				floatValue = RouteDataObject.parseSpeed(v, -1);
 			} else if (t.equalsIgnoreCase("lanes") && v != null) {
 				intValue = -1;
 				int i = 0;
@@ -284,6 +269,8 @@ public class BinaryMapRouteReaderAdapter {
 		}
 	}
 	
+	
+
 	private CodedInputStream codedIS;
 	private final BinaryMapIndexReader map;
 	
