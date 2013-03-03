@@ -1,5 +1,7 @@
 package net.osmand.router;
 
+import java.util.Map;
+
 import net.osmand.binary.RouteDataObject;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
 
@@ -59,10 +61,13 @@ public abstract class VehicleRouter {
 	 */
 	public abstract float getMaxDefaultSpeed();
 	
-	public abstract VehicleRouter specifyParameter(String tag);
-
 	/**
 	 * Calculate turn time 
 	 */
 	public abstract double calculateTurnTime(RouteSegment segment, int segmentEnd, RouteSegment prev, int prevSegmentEnd) ;
+
+	public abstract void addAttribute(String k, String v);
+
+	public abstract VehicleRouter specialization(Map<String, Object> params);
+	
 }

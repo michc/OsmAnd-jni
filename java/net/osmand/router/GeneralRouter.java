@@ -78,6 +78,7 @@ public class GeneralRouter extends VehicleRouter {
 		
 	}
 	
+	@Override
 	public void addAttribute(String k, String v) {
 		attributes.put(k, v);
 		if(k.equals("restrictionsAware")) {
@@ -314,7 +315,6 @@ public class GeneralRouter extends VehicleRouter {
 		}
 	}
 
-	@Override
 	public GeneralRouter specifyParameter(String specializationTag) {
 		Map<String, String> attrs = new LinkedHashMap<String, String>(attributes);
 		for(String s : attributes.keySet()){
@@ -342,6 +342,12 @@ public class GeneralRouter extends VehicleRouter {
 	@Override
 	public String getAttribute(String attribute) {
 		return attributes.get(attribute);
+	}
+
+	@Override
+	public VehicleRouter specialization(Map<String, Object> params) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 
