@@ -164,7 +164,7 @@ public class RoutingConfiguration {
 				}
 			} else if (tok == XmlPullParser.END_TAG) {
 				String pname = parser.getName();
-				if ("select".equals(pname) || "if".equals(pname) || "ifnot".equals(pname)) {
+				if (checkTag(pname)) {
 					rulesStck.pop();
 				}
 			}
@@ -199,12 +199,15 @@ public class RoutingConfiguration {
 		String t;
 		String v;
 		String param;
+		String value1;
+		String value2;
+		String type;
 	}
 
 	private static void parseRoutingRule(XmlPullParser parser, GeneralRouter currentRouter, RouteDataObjectAttribute attr,
 			Stack<RoutingRule> stack) {
 		String pname = parser.getName();
-		if ("select".equals(pname) || "if".equals(pname) || "ifnot".equals(pname)) {
+		if (checkTag(pname)) {
 			if(attr == null){
 				throw new NullPointerException("Select tag filter outside road attribute < " + pname + " > : "+parser.getLineNumber());
 			}
@@ -213,6 +216,9 @@ public class RoutingConfiguration {
 			rr.t = parser.getAttributeValue("", "t");
 			rr.v = parser.getAttributeValue("", "v");
 			rr.param = parser.getAttributeValue("", "param");
+			rr.value1 = parser.getAttributeValue("", "value1");
+			rr.value2 = parser.getAttributeValue("", "value2");
+			rr.type = parser.getAttributeValue("", "type");
 			
 			RouteAttributeContext ctx = currentRouter.getObjContext(attr);
 			if("select".equals(rr.tagName)) {
@@ -230,6 +236,11 @@ public class RoutingConfiguration {
 		}
 	}
 
+	private static boolean checkTag(String pname) {
+		return "select".equals(pname) || "if".equals(pname) || "ifnot".equals(pname)
+				|| "ge".equals(pname) || "le".equals(pname);
+	}
+
 	private static void addSubclause(RoutingRule rr, RouteAttributeContext ctx) {
 		boolean not = "ifnot".equals(rr.tagName);
 		if(!Algorithms.isEmpty(rr.param)) {
@@ -237,6 +248,11 @@ public class RoutingConfiguration {
 		}
 		if (!Algorithms.isEmpty(rr.t)) {
 			ctx.getLastRule().registerAndTagValueCondition(rr.t, Algorithms.isEmpty(rr.v) ? null : rr.v, not);
+		}
+		if (rr.tagName.equals("ge")) {
+			ctx.getLastRule().registerGreatCondition(rr.value1, rr.value2, rr.type);
+		} else if (rr.tagName.equals("le")) {
+			ctx.getLastRule().registerLessCondition(rr.value1, rr.value2, rr.type);
 		}
 	}
 

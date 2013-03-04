@@ -74,12 +74,17 @@
 			<select value="-1" t="barrier" v="debris"/>
 			<select value="-1" t="barrier" v="block"/>
 			<select value="-1" t="maxweight">
-				<gt value1=":weight" value2="$maxweight" type="weight"/>
+				<ge value1=":weight" value2="$maxweight" type="weight"/>
 			</select>
 			
 			<select value="-1" t="maxheight">
-				<gt value1=":height" value2="$maxheight" type="length"/>
-			</select> 
+				<ge value1=":height" value2="$maxheight" type="length"/>
+			</select>
+			
+			<!-- Example of maxspeed restriction 
+			<select value="-1" t="maxspeed">
+				 <le value1="60 mph" value2="$maxspeed" type="speed"/>
+			</select>   -->
 			
 			<select value="1" t="highway" v="motorway"/> 
 			<select value="1" t="highway" v="motorway_link"/>
@@ -215,7 +220,7 @@
 		</point>
  
 	
-		<!-- OLD ROUTING API -->
+		<!-- OLD ROUTING API not used-->
 		
 		<attribute name="followSpeedLimitations" value="true">
 			<specialization input="short_way" value="false"/>

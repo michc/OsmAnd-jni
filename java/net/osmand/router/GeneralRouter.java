@@ -512,12 +512,71 @@ public class GeneralRouter implements VehicleRouter {
 		public static final int LESS_EXPRESSION = 1;
 		public static final int GREAT_EXPRESSION = 2;
 		
-		private String value1;
-		private String value2;
+		public RouteAttributeExpression(String[] vs, String valueType, int expressionId) {
+			this.expressionType = expressionId;
+			this.values = vs;
+			if (vs.length < 2) {
+				throw new IllegalStateException("Expression should have at least 2 arguments");
+			}
+			this.cacheValues = new Number[vs.length];
+			this.valueType = valueType;
+			for (int i = 0; i < vs.length; i++) {
+				if(!vs[i].startsWith("$") && !vs[i].startsWith(":")) {
+					Object o = parseValue(vs[i], valueType);
+					if (o instanceof Number) {
+						cacheValues[i] = (Number) o;
+					}
+				}
+			}
+		}
+		
+		private String[] values;
 		private int expressionType;
-		// TODO expressions
-		private Number cacheValue1;
-		private Number cacheValue2;
+		private String valueType;
+		private Number[] cacheValues;
+		
+		public boolean matches(BitSet types, ParameterContext paramContext) {
+			double f1 = calculateExprValue(0, types, paramContext);
+			double f2 = calculateExprValue(1, types, paramContext);
+			if(Double.isNaN(f1) ||Double.isNaN(f2)) {
+				return false;
+			}
+			if (expressionType == LESS_EXPRESSION) {
+				return f1 <= f2;
+			} else if (expressionType == GREAT_EXPRESSION) {
+				return f1 >= f2;
+			}
+			return false;
+		}
+
+		private double calculateExprValue(int id, BitSet types, ParameterContext paramContext) {
+			String value = values[id];
+			Number cacheValue = cacheValues[id];
+			if(cacheValue != null) {
+				return cacheValue.doubleValue();
+			}
+			Object o = null;
+			if (value instanceof String && value.toString().startsWith("$")) {
+				BitSet mask = tagRuleMask.get(value.toString().substring(1));
+				if (mask != null && mask.intersects(types)) {
+					BitSet findBit = new BitSet(mask.size());
+					findBit.or(mask);
+					findBit.and(types);
+					int v = findBit.nextSetBit(0);
+					o = parseValueFromTag(v, valueType);
+				}
+			} else if (value instanceof String && value.toString().startsWith(":")) {
+				String p = ((String) value).substring(1);
+				if (paramContext != null && paramContext.vars.containsKey(p)) {
+					o = parseValue(paramContext.vars.get(p), value);
+				}
+			}
+			
+			if(o instanceof Number) {
+				return ((Number)o).doubleValue();
+			}
+			return Double.NaN;
+		}
 		
 	}
 	
@@ -591,6 +650,16 @@ public class GeneralRouter implements VehicleRouter {
 			}
 		}
 		
+		public void registerLessCondition(String value1, String value2, String valueType) {
+			expressions.add(new RouteAttributeExpression(new String[] { value1, value2 }, valueType,
+					RouteAttributeExpression.LESS_EXPRESSION));
+		}
+		
+		public void registerGreatCondition(String value1, String value2, String valueType) {
+			expressions.add(new RouteAttributeExpression(new String[] { value1, value2 }, valueType,
+					RouteAttributeExpression.GREAT_EXPRESSION));
+		}
+		
 		public void registerAndParamCondition(String param, boolean not) {
 			param = not ? "-" + param : param;
 			parameters.add(param);
@@ -610,8 +679,8 @@ public class GeneralRouter implements VehicleRouter {
 				if (mask != null && mask.intersects(types)) {
 					BitSet findBit = new BitSet(mask.size());
 					findBit.or(mask);
-					mask.and(types);
-					int value = mask.nextSetBit(0);
+					findBit.and(types);
+					int value = findBit.nextSetBit(0);
 					return parseValueFromTag(value, selectType);
 				}
 			} else if (selectValue instanceof String && selectValue.toString().startsWith(":")) {
@@ -638,14 +707,18 @@ public class GeneralRouter implements VehicleRouter {
 			if(!checkNotFreeTags(types)) {
 				return false;
 			}
-			if(!checkExpressions(types)) {
+			if(!checkExpressions(types, paramContext)) {
 				return false;
 			}
 			return true;
 		}
 
-		private boolean checkExpressions(BitSet types) {
-			// TODO Auto-generated method stub
+		private boolean checkExpressions(BitSet types, ParameterContext paramContext) {
+			for(RouteAttributeExpression e : expressions){
+				if(!e.matches(types, paramContext)) {
+					return false;
+				}
+			}
 			return true;
 		}
 
