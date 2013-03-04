@@ -456,7 +456,7 @@ public class BinaryRoutePlanner {
 				boolean outgoingConnections = false;
 				RouteSegment r = roadNext;
 				while(r != null && !outgoingConnections) {
-					if(r.road.id != road.id || r.getSegmentStart() != 0 || r.road.getOneway() != 1){
+					if(r.road.id != road.id || r.getSegmentStart() != 0 || ctx.getRouter().isOneWay(r.road) != 1){
 						outgoingConnections = true;
 					}
 					r = r.next;
