@@ -69,7 +69,7 @@ public class RoutingConfiguration {
 					for (String s : specialization) {
 						params.put(s, "true");
 					}
-					i.router = i.router.specialization(params);
+					i.router = i.router.build(params);
 				}
 				i.routerName = router;
 			}
@@ -255,7 +255,7 @@ public class RoutingConfiguration {
 		return currentRouter;
 	}
 
-	private static void parseAttribute(XmlPullParser parser, final RoutingConfiguration.Builder config, VehicleRouter currentRouter) {
+	private static void parseAttribute(XmlPullParser parser, final RoutingConfiguration.Builder config, GeneralRouter currentRouter) {
 		if(currentRouter != null) {
 			currentRouter.addAttribute(parser.getAttributeValue("", "name"), 
 					parser.getAttributeValue("", "value"));
