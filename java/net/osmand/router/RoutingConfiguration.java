@@ -109,12 +109,6 @@ public class RoutingConfiguration {
 		return Integer.parseInt(t);
 	}
 
-	private static boolean parseSilentBoolean(String t, boolean v) {
-		if (t == null || t.length() == 0) {
-			return v;
-		}
-		return Boolean.parseBoolean(t);
-	}
 
 	private static float parseSilentFloat(String t, float v) {
 		if (t == null || t.length() == 0) {
