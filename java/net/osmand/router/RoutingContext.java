@@ -89,7 +89,7 @@ public class RoutingContext {
 	// updated by route planner in bytes
 	public int memoryOverhead = 0;
 	
-	
+	long ttlLoad = 0;
 	long timeToLoad = 0;
 	long timeToLoadHeaders = 0;
 	long timeToFindInitialSegments = 0;
@@ -386,8 +386,13 @@ public class RoutingContext {
 			if (routes != null) {
 				for (RouteDataObject ro : routes) {
 					for (int i = 0; i < ro.pointsX.length; i++) {
+						long id = calcRouteId(ro, i);
+						//me
+						//if(excludeDuplications.contains(id))
+						//	continue;
+						//me
 						if (ro.getPoint31XTile(i) == x31 && ro.getPoint31YTile(i) == y31) {
-							excludeDuplications.put(calcRouteId(ro, i), ro);
+							excludeDuplications.put(id, ro);
 							RouteSegment segment = new RouteSegment(ro, i);
 							segment.next = original;
 							original = segment;
@@ -404,26 +409,36 @@ public class RoutingContext {
 		}
 		return original;
 	}
-	
+		
 	private void loadSubregionTile(final RoutingSubregionTile ts, boolean loadObjectsInMemory) {
 		boolean wasUnloaded = ts.isUnloaded();
 		int ucount = ts.getUnloadCont();
 		if (nativeLib == null) {
 			long now = System.nanoTime();
+			int rejCnt = 0;
+			int accCnt = 0;
 			try {
 				BinaryMapIndexReader reader = reverseMap.get(ts.subregion.routeReg);
 				ts.setLoadedNonNative();
 				List<RouteDataObject> res = reader.loadRouteIndexData(ts.subregion);
 //				System.out.println(ts.subregion.shiftToData + " " + res);
 				for(RouteDataObject ro : res){
-					if(ro != null && config.router.acceptLine(ro)) {
-						ts.add(ro);
+					if(ro == null)
+						continue;
+					if(!config.router.acceptLine(ro))
+					{
+						rejCnt++; 
+						continue;
 					}
+					
+					ts.add(ro);
+					accCnt++;
 				}
 			} catch (IOException e) {
 				throw new RuntimeException("Loading data exception", e);
 			}
 
+			ttlLoad += rejCnt + accCnt;
 			timeToLoad += (System.nanoTime() - now);
 		} else {
 			long now = System.nanoTime();
@@ -534,16 +549,16 @@ public class RoutingContext {
 					runGCUsedMemory();
 					long h2 = runGCUsedMemory();
 					float mb = (1 << 20);
-					log.warn("Unload tiles :  estimated " + (sz1 - sz2) / mb + " ?= " + (h1 - h2) / mb + " actual");
-					log.warn("Used after " + h2 / mb + " of " + Runtime.getRuntime().totalMemory() / mb + " max "
-							+ maxMemory() / mb);
+					//log.warn("Unload tiles :  estimated " + (sz1 - sz2) / mb + " ?= " + (h1 - h2) / mb + " actual");
+					//log.warn("Used after " + h2 / mb + " of " + Runtime.getRuntime().totalMemory() / mb + " max "
+					//		+ maxMemory() / mb);
 				} else {
 					 float mb = (1 << 20);
 					 int sz2 = getCurrentEstimatedSize();
-					 log.warn("Unload tiles :  occupied before " + sz1 / mb + " Mb - now  " + sz2 / mb + "MB " + 
-					 memoryLimit/mb + " limit MB " + config.memoryLimitation/mb);
+					 //log.warn("Unload tiles :  occupied before " + sz1 / mb + " Mb - now  " + sz2 / mb + "MB " + 
+					 //memoryLimit/mb + " limit MB " + config.memoryLimitation/mb);
 					 long us2 = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
-					 log.warn("Used memory before " + us1 / mb + "after " + us1 / mb + " of max " + maxMemory() / mb);
+					 //log.warn("Used memory before " + us1 / mb + "after " + us1 / mb + " of max " + maxMemory() / mb);
 				}
 			}
 			if (!indexedSubregions.containsKey(tileId)) {

@@ -102,6 +102,11 @@ public class BinaryRoutePlanner {
 		float estimatedDistance = (float) estimatedDistance(ctx, ctx.targetX, ctx.targetY, ctx.startX, ctx.startY);
 		end.distanceToEnd = start.distanceToEnd	= estimatedDistance;
 		
+		if(TRACE_ROUTING){
+			printRoad("From: ", start);
+			printRoad("To  : ", end);
+		}
+		
 		graphDirectSegments.add(start);
 		graphReverseSegments.add(end);
 		
@@ -118,7 +123,16 @@ public class BinaryRoutePlanner {
 		ctx.loadBorderPoints();
 		
 		FinalRouteSegment finalSegment = null;
+		long iteration = 0;
 		while (!graphSegments.isEmpty()) {
+			if(TRACE_ROUTING)
+			{
+				println("----------------------------------------");
+				println((inverse ? "R" : "D") + "-Queue (" + graphSegments.size() + "):");
+				PriorityQueue<RouteSegment> dup = new PriorityQueue<RouteSegment>(graphSegments);
+				while(dup.size() > 0)
+					printRoad("\t", dup.poll());		
+			}
 			RouteSegment segment = graphSegments.poll();
 			// use accumulative approach
 			ctx.memoryOverhead = (visitedDirectSegments.size() + visitedOppositeSegments.size()) * STANDARD_ROAD_VISITED_OVERHEAD + 
@@ -126,7 +140,7 @@ public class BinaryRoutePlanner {
 					graphReverseSegments.size()) * STANDARD_ROAD_IN_QUEUE_OVERHEAD;
 			
 			if(TRACE_ROUTING){
-				printRoad(">", segment);
+				printRoad("> ", segment);
 			}
 			if(segment instanceof FinalRouteSegment) {
 				if(RoutingContext.SHOW_GC_SIZE){
@@ -136,21 +150,39 @@ public class BinaryRoutePlanner {
 				finalSegment = (FinalRouteSegment) segment;
 				break;
 			}
+			
+			if(TRACE_ROUTING)
+			{
+				iteration++;
+			}
+			
 			if (ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95 && RoutingContext.SHOW_GC_SIZE) {
 				printMemoryConsumption("Memory occupied before exception : ");
 			}
 			if(ctx.memoryOverhead > ctx.config.memoryLimitation * 0.95) {
-				throw new IllegalStateException("There is no enough memory " + ctx.config.memoryLimitation/(1<<20) + " Mb");
+//				throw new IllegalStateException("There is no enough memory " + ctx.config.memoryLimitation/(1<<20) + " Mb");
 			}
 			ctx.visitedSegments++;
 			if (!inverse) {
+				if(TRACE_ROUTING){
+					println("\tFwd-search:");
+				}
 				processRouteSegment(ctx, false, graphDirectSegments, visitedDirectSegments, 
 						segment, visitedOppositeSegments, true);
+				if(TRACE_ROUTING){
+					println("\tRev-search:");
+				}
 				processRouteSegment(ctx, false, graphDirectSegments, visitedDirectSegments, 
 						segment, visitedOppositeSegments, false);
 			} else {
+				if(TRACE_ROUTING){
+					println("\tFwd-search:");
+				}
 				processRouteSegment(ctx, true, graphReverseSegments, visitedOppositeSegments, segment,
 						visitedDirectSegments, true);
+				if(TRACE_ROUTING){
+					println("\tRev-search:");
+				}
 				processRouteSegment(ctx, true, graphReverseSegments, visitedOppositeSegments,segment,
 						visitedDirectSegments, false);
 			}
@@ -188,6 +220,10 @@ public class BinaryRoutePlanner {
 			if(ctx.calculationProgress != null && ctx.calculationProgress.isCancelled) {
 				throw new InterruptedException("Route calculation interrupted");
 			}
+		}
+		if(TRACE_ROUTING)
+		{
+			println("Iterations " + iteration);
 		}
 		printDebugMemoryInformation(ctx, graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
 		return finalSegment;
@@ -261,7 +297,8 @@ public class BinaryRoutePlanner {
 		} else {
 			pr = "";
 		}
-		println(prefix  +"" + segment.road + " ind=" + segment.getSegmentStart() + 
+		println(prefix + "" + segment.road.id + " ind=" + segment.getSegmentStart() +
+				" w=" + ((float)segment.distanceFromStart + (float)segment.distanceToEnd) + 
 				" ds=" + ((float)segment.distanceFromStart) + " es="+((float)segment.distanceToEnd) + pr);
 	}
 
@@ -644,7 +681,7 @@ public class BinaryRoutePlanner {
 		if (thereAreRestrictions) {
 			nextIterator = ctx.segmentsToVisitPrescripted.iterator();
 			if(TRACE_ROUTING){
-				println("  >> There are restrictions");
+				println("\t>> There are restrictions");
 			}
 		}
 		// Calculate possible ways to put into priority queue
@@ -686,7 +723,7 @@ public class BinaryRoutePlanner {
 						next.setAllowedDirection((byte) (segment.getSegmentStart() < next.getSegmentStart() ? 1 : - 1));
 					}
 					if(TRACE_ROUTING) {
-						printRoad("  >>", next);
+						printRoad("\t>> ", next);
 					}
 					// put additional information to recover whole route after
 					next.setParentRoute(segment);

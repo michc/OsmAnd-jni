@@ -4,7 +4,10 @@ package net.osmand.router;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import net.osmand.PlatformUtil;
 import net.osmand.binary.BinaryMapRouteReaderAdapter;
@@ -142,7 +145,7 @@ public class RoutePlannerFrontEnd {
 			ctx.calculationProgress.segmentNotFound = indexNotFound;
 			return false;
 		} else {
-			log.info("Route segment found " + f.getRoad().id + " " + f.getRoad().getName());
+			log.info("Route segment found (" + s.toString() + ") " + f.getRoad().id + " " + f.getRoad().getName());
 			res.add(f);
 			return true;
 		}

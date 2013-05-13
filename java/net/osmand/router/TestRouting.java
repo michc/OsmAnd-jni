@@ -121,8 +121,8 @@ public class TestRouting {
 			BinaryMapIndexReader[] rs = collectFiles(params.obfDir.getAbsolutePath());
 			calculateRoute(params.startLat, params.startLon,
 					params.endLat, params.endLon, rs);
-			calculateRoute(params.startLat, params.startLon,
-					params.endLat, params.endLon, rs);
+			/*calculateRoute(params.startLat, params.startLon,
+					params.endLat, params.endLon, rs);*/
 		}
 
 	}
@@ -286,7 +286,7 @@ public class TestRouting {
 	public static void calculateRoute(String folderWithObf,
 			double startLat, double startLon, double endLat, double endLon) throws IOException, InterruptedException {
 		BinaryMapIndexReader[] rs = collectFiles(folderWithObf);
-		RouteResultPreparation.PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = false;
+		//RouteResultPreparation.PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = false;
 		calculateRoute(startLat, startLon, endLat, endLon, rs);
 		calculateRoute(startLat, startLon, endLat, endLon, rs);
 	}
@@ -314,7 +314,7 @@ public class TestRouting {
 		long ts = System.currentTimeMillis();
 		Builder config = RoutingConfiguration.getDefault();
 		RoutingConfiguration rconfig = config.build("car", MEMORY_TEST_LIMIT);
-		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(oldRouting);
+		RoutePlannerFrontEnd router = new RoutePlannerFrontEnd(false);
 		RoutingContext ctx = new RoutingContext(rconfig, lib, rs);
 		RouteSegment startSegment = router.findRouteSegment(startLat, startLon, ctx);
 		RouteSegment endSegment = router.findRouteSegment(endLat, endLon, ctx);
@@ -326,7 +326,9 @@ public class TestRouting {
 		}
 		List<RouteSegmentResult> route = router.searchRoute(ctx,
 				new LatLon(startLat, startLon), new LatLon(endLat, endLon), null,  false);
-		System.out.println("Route is " + route.size() + " segments " + (System.currentTimeMillis() - ts) + " ms ");
+		System.out.println("Route is " + route.size() + " segments " + (System.currentTimeMillis() - ts) + " ms:");
+		for(RouteSegmentResult rsr : route)
+			System.out.println("\t" + rsr.getObject() + ", points(" + rsr.getStartPointIndex() + ", " + rsr.getEndPointIndex() + ")");			
 	}
 
 }

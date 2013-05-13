@@ -145,24 +145,28 @@ public class RouteResultPreparation {
 			// Get results from opposite direction roads
 			RouteSegment segment = finalSegment.reverseWaySearch ? finalSegment : finalSegment.opposite.getParentRoute();
 			int parentSegmentStart = finalSegment.reverseWaySearch ? finalSegment.opposite.getSegmentStart() : finalSegment.opposite.getParentSegmentEnd();
+			int i = 0;
 			while (segment != null) {
+				println(segment.road.id + "(" + parentSegmentStart + ", " + segment.getSegmentStart() + "),");
 				RouteSegmentResult res = new RouteSegmentResult(segment.road, parentSegmentStart, segment.getSegmentStart());
 				parentSegmentStart = segment.getParentSegmentEnd();
 				segment = segment.getParentRoute();
 				addRouteSegmentToResult(result, res, false);
+				i++;
 			}
 			// reverse it just to attach good direction roads
 			Collections.reverse(result);
 
 			segment = finalSegment.reverseWaySearch ? finalSegment.opposite.getParentRoute() : finalSegment;
 			int parentSegmentEnd = finalSegment.reverseWaySearch ? finalSegment.opposite.getParentSegmentEnd() : finalSegment.opposite.getSegmentStart();
-			
+			i = 0;
 			while (segment != null) {
 				RouteSegmentResult res = new RouteSegmentResult(segment.road, segment.getSegmentStart(), parentSegmentEnd);
 				parentSegmentEnd = segment.getParentSegmentEnd();
 				segment = segment.getParentRoute();
 				// happens in smart recalculation
 				addRouteSegmentToResult(result, res, true);
+				i++;
 			}
 			Collections.reverse(result);
 
@@ -180,6 +184,7 @@ public class RouteResultPreparation {
 					}
 				}
 			}
+			println("-> " + res.getObject().id + "(" + res.getStartPointIndex() + ", " + res.getEndPointIndex() + "),");
 			result.add(res);
 		}
 	}

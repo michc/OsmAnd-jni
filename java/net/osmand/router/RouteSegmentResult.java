@@ -165,5 +165,8 @@ public class RouteSegmentResult {
 		this.description = description;
 	}
 	
-	
+	@Override
+	public String toString() {
+		return object + "(" + startPointIndex + ";" + endPointIndex + ")";
+	}
 }
